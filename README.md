@@ -58,17 +58,12 @@ A powerful, enterprise-grade web form scraping and automation system built with 
 
 ---
 
-## 🎥 Demo
-
 ### Scraping a Form
-![Scraping Demo](https://via.placeholder.com/800x400/667eea/ffffff?text=Scraping+Demo)
+<img width="1256" height="857" alt="image" src="https://github.com/user-attachments/assets/c062e114-3ffe-4160-88f6-9bb97f3b7ec3" />
+
 
 ### Filling a Form
-![Filling Demo](https://via.placeholder.com/800x400/764ba2/ffffff?text=Filling+Demo)
-
-### Live Demo
-🌐 [View Live Demo](https://your-demo-url.com) *(Coming Soon)*
-
+<img width="1262" height="847" alt="image" src="https://github.com/user-attachments/assets/12e91701-1573-4cb3-a62f-6838141e7baf" />
 ---
 
 ## 🛠️ Tech Stack
@@ -194,6 +189,9 @@ Server: http://localhost:5000
 ============================================================
  * Running on http://0.0.0.0:5000
 ```
+
+<img width="913" height="351" alt="image" src="https://github.com/user-attachments/assets/5f73e9cd-3e28-4112-81a4-403b1f71f83c" />
+
 
 ### Step 3: Open Browser
 
