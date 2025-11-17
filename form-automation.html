@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Automation System - Standalone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+        
+        button.danger {
+            background: #dc3545;
+        }
+        
+        .field-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .form-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .form-item h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .form-item p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .form-actions {
+            margin-top: 10px;
+        }
+        
+        .status {
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .log-item {
+            border-left: 4px solid #667eea;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+        
+        .log-item.error {
+            border-left-color: #dc3545;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            color: #0d47a1;
+            margin: 5px 0;
+        }
+
+        .storage-status {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .add-field-btn {
+            background: #28a745;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Form Automation System</h1>
+        
+        <div class="storage-status">
+            ✅ Using Browser LocalStorage - Data persists across sessions
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('create')">Create Form</button>
+            <button class="tab" onclick="switchTab('fill')">Fill Form</button>
+            <button class="tab" onclick="switchTab('logs')">Logs</button>
+        </div>
+        
+        <!-- Create Form Tab -->
+        <div id="create-tab" class="tab-content active">
+            <div class="card">
+                <h2>📝 Create Form Template</h2>
+                <div class="info-box">
+                    <p><strong>Manual Setup:</strong> Create form templates by manually adding fields.</p>
+                    <p><strong>Storage:</strong> Data saved in your browser's localStorage.</p>
+                </div>
+                <div class="form-group">
+                    <label>Form Name *</label>
+                    <input type="text" id="formName" placeholder="e.g., Contact Form">
+                </div>
+                <div class="form-group">
+                    <label>Target URL *</label>
+                    <input type="text" id="formUrl" placeholder="https://example.com/contact">
+                </div>
+
+                <h3 style="margin-top: 20px; margin-bottom: 10px;">Form Fields</h3>
+                <div id="fieldsContainer"></div>
+                
+                <button class="add-field-btn" onclick="addField()">➕ Add Field</button>
+                <button onclick="saveForm()" style="margin-top: 20px;">💾 Save Form Template</button>
+                <div id="createStatus"></div>
+            </div>
+            
+            <div class="card">
+                <h2>📋 Saved Forms</h2>
+                <div id="formsList"></div>
+            </div>
+        </div>
+        
+        <!-- Fill Form Tab -->
+        <div id="fill-tab" class="tab-content">
+            <div class="card">
+                <h2>✍️ Fill Form</h2>
+                <div class="info-box">
+                    <p><strong>Instructions:</strong> Select a saved form template and enter values for each field.</p>
+                </div>
+                <div class="form-group">
+                    <label>Select Form</label>
+                    <select id="selectForm" onchange="loadFormFields()">
+                        <option value="">-- Choose a form --</option>
+                    </select>
+                </div>
+                <div id="fillFields"></div>
+                <button onclick="generateInstructions()" style="margin-top: 20px;">📋 Generate Instructions</button>
+                <div id="fillStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Logs Tab -->
+        <div id="logs-tab" class="tab-content">
+            <div class="card">
+                <h2>📊 Activity Logs</h2>
+                <button onclick="loadLogs()">🔄 Refresh Logs</button>
+                <button class="danger" onclick="clearLogs()" style="margin-left: 10px;">🗑️ Clear All Logs</button>
+                <div id="logsList" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // LocalStorage keys
+        const STORAGE_KEYS = {
+            FORMS: 'form_automation_forms',
+            LOGS: 'form_automation_logs'
+        };
+
+        let fieldCounter = 0;
+        
+        // Database operations using localStorage
+        function dbGetForms() {
+            const data = localStorage.getItem(STORAGE_KEYS.FORMS);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function dbSaveForms(forms) {
+            localStorage.setItem(STORAGE_KEYS.FORMS, JSON.stringify(forms));
+            return true;
+        }
+
+        function dbGetLogs() {
+            const data = localStorage.getItem(STORAGE_KEYS.LOGS);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function dbSaveLogs(logs) {
+            localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(logs));
+            return true;
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            if (tabName === 'fill') loadFormsDropdown();
+            if (tabName === 'logs') loadLogs();
+        }
+        
+        // Add field to form builder
+        function addField() {
+            const container = document.getElementById('fieldsContainer');
+            const fieldId = fieldCounter++;
+            
+            const fieldHtml = `
+                <div class="field-item" id="field-${fieldId}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong>Field ${fieldId + 1}</strong>
+                        <button class="danger" onclick="removeField(${fieldId})" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Field Name</label>
+                        <input type="text" data-field="${fieldId}" data-prop="name" placeholder="e.g., email">
+                    </div>
+                    <div class="form-group">
+                        <label>Field Type</label>
+                        <select data-field="${fieldId}" data-prop="type">
+                            <option value="text">Text</option>
+                            <option value="email">Email</option>
+                            <option value="password">Password</option>
+                            <option value="tel">Phone</option>
+                            <option value="number">Number</option>
+                            <option value="textarea">Textarea</option>
+                            <option value="select">Select/Dropdown</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="radio">Radio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>CSS Selector</label>
+                        <input type="text" data-field="${fieldId}" data-prop="selector" placeholder="e.g., #email or .form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Placeholder</label>
+                        <input type="text" data-field="${fieldId}" data-prop="placeholder" placeholder="e.g., Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" data-field="${fieldId}" data-prop="required">
+                            Required Field
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', fieldHtml);
+        }
+
+        function removeField(fieldId) {
+            const field = document.getElementById(`field-${fieldId}`);
+            if (field) field.remove();
+        }
+
+        // Collect field data from form builder
+        function collectFields() {
+            const fields = [];
+            const container = document.getElementById('fieldsContainer');
+            const fieldItems = container.querySelectorAll('.field-item');
+            
+            fieldItems.forEach(item => {
+                const inputs = item.querySelectorAll('[data-field]');
+                const field = {};
+                
+                inputs.forEach(input => {
+                    const prop = input.dataset.prop;
+                    if (input.type === 'checkbox') {
+                        field[prop] = input.checked;
+                    } else {
+                        field[prop] = input.value;
+                    }
+                });
+                
+                if (field.name) fields.push(field);
+            });
+            
+            return fields;
+        }
+        
+        // Save form template
+        function saveForm() {
+            const name = document.getElementById('formName').value;
+            const url = document.getElementById('formUrl').value;
+            const fields = collectFields();
+            
+            if (!name || !url) {
+                alert('Please enter form name and URL');
+                return;
+            }
+
+            if (fields.length === 0) {
+                alert('Please add at least one field');
+                return;
+            }
+            
+            const formData = {
+                form_id: Date.now().toString(),
+                name,
+                url,
+                fields,
+                created_at: new Date().toISOString()
+            };
+            
+            const forms = dbGetForms();
+            forms.push(formData);
+            dbSaveForms(forms);
+            
+            logActivity(formData.form_id, 'success', `Form template "${name}" created with ${fields.length} fields`);
+            showStatus('createStatus', 'success', 'Form saved successfully!');
+            loadForms();
+            
+            // Clear form
+            document.getElementById('formName').value = '';
+            document.getElementById('formUrl').value = '';
+            document.getElementById('fieldsContainer').innerHTML = '';
+            fieldCounter = 0;
+        }
+        
+        // Load saved forms
+        function loadForms() {
+            const forms = dbGetForms();
+            const list = document.getElementById('formsList');
+            list.innerHTML = forms.length === 0 ? '<p>No forms saved yet. Create your first form above!</p>' : '';
+            
+            forms.forEach(form => {
+                list.innerHTML += `
+                    <div class="form-item">
+                        <h3>${form.name}</h3>
+                        <p>URL: ${form.url}</p>
+                        <p>Fields: ${form.fields.length}</p>
+                        <p>Created: ${new Date(form.created_at).toLocaleString()}</p>
+                        <div class="form-actions">
+                            <button onclick="viewForm('${form.form_id}')">👁️ View</button>
+                            <button class="danger" onclick="deleteForm('${form.form_id}')">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function viewForm(formId) {
+            const forms = dbGetForms();
+            const form = forms.find(f => f.form_id === formId);
+            if (!form) return;
+            
+            let details = `Form: ${form.name}\nURL: ${form.url}\n\nFields:\n`;
+            form.fields.forEach((f, i) => {
+                details += `${i+1}. ${f.name} (${f.type}) - Selector: ${f.selector}\n`;
+            });
+            alert(details);
+        }
+        
+        // Delete form
+        function deleteForm(formId) {
+            if (!confirm('Delete this form template?')) return;
+            
+            const forms = dbGetForms();
+            const form = forms.find(f => f.form_id === formId);
+            const filteredForms = forms.filter(f => f.form_id !== formId);
+            
+            dbSaveForms(filteredForms);
+            logActivity(formId, 'success', `Form template "${form?.name || formId}" deleted`);
+            loadForms();
+        }
+        
+        // Load forms dropdown
+        function loadFormsDropdown() {
+            const forms = dbGetForms();
+            const select = document.getElementById('selectForm');
+            select.innerHTML = '<option value="">-- Choose a form --</option>';
+            
+            forms.forEach(form => {
+                select.innerHTML += `<option value="${form.form_id}">${form.name}</option>`;
+            });
+        }
+        
+        // Load form fields for filling
+        function loadFormFields() {
+            const formId = document.getElementById('selectForm').value;
+            const forms = dbGetForms();
+            const form = forms.find(f => f.form_id === formId);
+            
+            const container = document.getElementById('fillFields');
+            container.innerHTML = '';
+            
+            if (!form) return;
+            
+            form.fields.forEach(field => {
+                container.innerHTML += `
+                    <div class="form-group">
+                        <label>${field.name} ${field.required ? '*' : ''}</label>
+                        <input type="${field.type === 'textarea' ? 'text' : field.type}" 
+                               id="value-${field.name}" 
+                               placeholder="${field.placeholder || 'Enter value'}">
+                    </div>
+                `;
+            });
+        }
+        
+        // Generate instructions
+        function generateInstructions() {
+            const formId = document.getElementById('selectForm').value;
+            const forms = dbGetForms();
+            const form = forms.find(f => f.form_id === formId);
+            
+            if (!form) {
+                alert('Please select a form');
+                return;
+            }
+            
+            const values = {};
+            form.fields.forEach(field => {
+                const input = document.getElementById(`value-${field.name}`);
+                if (input) {
+                    values[field.name] = input.value;
+                }
+            });
+            
+            let instructions = `<h3>Form Filling Instructions for: ${form.name}</h3><br>`;
+            instructions += `<strong>URL:</strong> <a href="${form.url}" target="_blank">${form.url}</a><br><br>`;
+            instructions += `<strong>Steps:</strong><ol>`;
+            
+            form.fields.forEach((field, i) => {
+                const value = values[field.name] || '[Not provided]';
+                instructions += `<li>Find element with selector <code>${field.selector}</code> and enter: <strong>${value}</strong></li>`;
+            });
+            
+            instructions += `<li>Click the Submit button</li></ol>`;
+            
+            const statusDiv = document.getElementById('fillStatus');
+            statusDiv.innerHTML = `<div class="status success">${instructions}</div>`;
+            
+            logActivity(formId, 'success', `Instructions generated for "${form.name}"`, values);
+        }
+        
+        // Log activity
+        function logActivity(formId, status, message, values = null) {
+            const logs = dbGetLogs();
+            logs.unshift({
+                form_id: formId,
+                timestamp: new Date().toISOString(),
+                status,
+                message,
+                values
+            });
+            
+            if (logs.length > 100) {
+                logs.splice(100);
+            }
+            
+            dbSaveLogs(logs);
+        }
+        
+        // Load logs
+        function loadLogs() {
+            const logs = dbGetLogs();
+            const forms = dbGetForms();
+            const list = document.getElementById('logsList');
+            list.innerHTML = logs.length === 0 ? '<p>No logs yet</p>' : '';
+            
+            logs.forEach(log => {
+                const form = forms.find(f => f.form_id === log.form_id);
+                const formName = form?.name || log.form_id;
+                
+                list.innerHTML += `
+                    <div class="log-item ${log.status}">
+                        <strong>${formName}</strong><br>
+                        ${new Date(log.timestamp).toLocaleString()}<br>
+                        Status: ${log.status}<br>
+                        ${log.message}
+                    </div>
+                `;
+            });
+        }
+
+        // Clear all logs
+        function clearLogs() {
+            if (!confirm('Clear all activity logs? This cannot be undone.')) return;
+            
+            dbSaveLogs([]);
+            loadLogs();
+            alert('All logs cleared');
+        }
+        
+        // Show status message
+        function showStatus(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => element.innerHTML = '', 5000);
+        }
+        
+        // Initialize
+        loadForms();
+    </script>
+</body>
+</html>
