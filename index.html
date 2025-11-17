@@ -1,10 +1,146 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Form Automation</title>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Automation System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .status-item:last-child { border-bottom: none; }
+        .status-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .status-value {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Form Automation System</h1>
-    <p>API is running! Use endpoints like /api/forms, /api/scrape, etc.</p>
+    <div class="container">
+        <h1>🤖 Form Automation System</h1>
+        <p class="subtitle">Intelligent web form scraping and automation</p>
+        
+        <button onclick="testConnection()">🔍 Test System Connection</button>
+        
+        <div class="loading" id="loading">Testing connection...</div>
+        
+        <div class="status-card" id="statusCard" style="display:none;">
+            <h3>System Status</h3>
+            <div class="status-item">
+                <span class="status-label">MongoDB Database</span>
+                <span class="status-value" id="mongoStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Playwright Browser</span>
+                <span class="status-value" id="playwrightStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Server Time</span>
+                <span class="status-value status-ok" id="serverTime">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const loading = document.getElementById('loading');
+            const statusCard = document.getElementById('statusCard');
+            
+            loading.style.display = 'block';
+            statusCard.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/test-connection');
+                const data = await response.json();
+                
+                document.getElementById('mongoStatus').textContent = data.mongodb ? '✓ Connected' : '✗ Failed';
+                document.getElementById('mongoStatus').className = 'status-value ' + (data.mongodb ? 'status-ok' : 'status-error');
+                
+                document.getElementById('playwrightStatus').textContent = data.playwright ? '✓ Ready' : '✗ Failed';
+                document.getElementById('playwrightStatus').className = 'status-value ' + (data.playwright ? 'status-ok' : 'status-error');
+                
+                document.getElementById('serverTime').textContent = new Date(data.timestamp).toLocaleString();
+                
+                statusCard.style.display = 'block';
+            } catch (error) {
+                alert('Error testing connection: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
