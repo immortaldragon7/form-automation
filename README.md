@@ -1,6 +1,6 @@
-# 🤖 Form Automation System
+<img width="1847" height="907" alt="image" src="https://github.com/user-attachments/assets/aaf63c2b-5210-4e72-bc5d-b0622f79bf6a" /># 🤖 Form Automation System
 
-A powerful, standalone web application for creating and managing form templates with automated filling instructions. No backend required - runs entirely in your browser!
+A powerful, standalone web application for creating and managing form templates with automated filling instructions. MONGODB back-end - runs entirely in your browser!
 
 ![Form Automation System](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -19,17 +19,18 @@ A powerful, standalone web application for creating and managing form templates 
 
 ## 🎯 Demo
 
-![Demo Screenshot](screenshot.png)
-*Add a screenshot of your app here*
+
+<img width="1847" height="907" alt="image" src="https://github.com/user-attachments/assets/161710cb-6ff0-4abe-bf33-b0cdb52d8e44" />
+
 
 ## 🚀 Quick Start
 
-### Option 1: Direct Use
+1: Direct Use
 1. Download `form-automation.html`
 2. Double-click to open in your browser
 3. Start creating forms!
 
-### Option 2: Clone Repository
+   2: Clone Repository
 ```bash
 git clone https://github.com/YourUsername/form-automation-system.git
 cd form-automation-system
