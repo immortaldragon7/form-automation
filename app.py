@@ -1,26 +1,37 @@
-
-from flask import Flask, render_template, request, jsonify, send_file
-from pymongo import MongoClient
+from flask import Flask , render_template, request, jsonify
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 from datetime import datetime
 import json
 import os
-from bson import ObjectId
 import base64
 
 app = Flask(__name__)
 
-# MongoDB Configuration
+# MongoDB Configuration (Optional - will work without it)
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
-client = MongoClient(MONGO_URI)
-db = client['form_automation']
-forms_collection = db['forms']
-logs_collection = db['logs']
+
+try:
+    from pymongo import MongoClient
+    
+    
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    client.server_info()
+    db = client['form_automation']
+    forms_collection = db['forms']
+    logs_collection = db['logs']
+    MONGO_AVAILABLE = True
+    print("✅ MongoDB Connected!")
+except Exception as e:
+    print(f"⚠️  MongoDB not available: {e}")
+    print("⚠️  Running without database")
+    client = None
+    forms_collection = None
+    logs_collection = None
+    MONGO_AVAILABLE = False
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, ObjectId):
-            return str(obj)
+        return str(obj)
         return super(JSONEncoder, self).default(obj)
 
 app.json_encoder = JSONEncoder
@@ -53,7 +64,6 @@ def create_form():
         }
         forms_collection.insert_one(form_data)
         
-        # Log activity
         log_entry = {
             'form_id': data['form_id'],
             'timestamp': datetime.now().isoformat(),
@@ -74,7 +84,6 @@ def delete_form(form_id):
         result = forms_collection.delete_one({'form_id': form_id})
         
         if result.deleted_count > 0:
-            # Log activity
             log_entry = {
                 'form_id': form_id,
                 'timestamp': datetime.now().isoformat(),
@@ -101,7 +110,6 @@ def scrape_form():
     
     try:
         with sync_playwright() as p:
-            # Launch browser
             browser = p.chromium.launch(headless=True)
             context = browser.new_context(
                 viewport={'width': 1920, 'height': 1080},
@@ -109,26 +117,19 @@ def scrape_form():
             )
             page = context.new_page()
             
-            # Navigate to URL
             page.goto(url, wait_until='networkidle', timeout=30000)
-            page.wait_for_timeout(2000)  # Wait for dynamic content
+            page.wait_for_timeout(2000)
             
-            # Extract form fields
             fields = page.evaluate("""
                 () => {
                     const fields = [];
-                    
-                    // Get all form elements
-                    const forms = document.querySelectorAll('form');
                     const allInputs = document.querySelectorAll('input, textarea, select');
                     
                     allInputs.forEach(input => {
-                        // Skip hidden and submit buttons
                         if (input.type === 'hidden' || input.type === 'submit' || input.type === 'button') {
                             return;
                         }
                         
-                        // Build selector
                         let selector = '';
                         if (input.id) {
                             selector = '#' + input.id;
@@ -138,14 +139,12 @@ def scrape_form():
                             selector = '.' + input.className.split(' ')[0];
                         }
                         
-                        // Get label text
                         let label = '';
                         if (input.id) {
                             const labelEl = document.querySelector(`label[for="${input.id}"]`);
                             if (labelEl) label = labelEl.textContent.trim();
                         }
                         
-                        // For select elements, get options
                         let options = [];
                         if (input.tagName.toLowerCase() === 'select') {
                             options = Array.from(input.options).map(opt => ({
@@ -171,13 +170,11 @@ def scrape_form():
                 }
             """)
             
-            # Take screenshot
             screenshot = page.screenshot(full_page=False)
             screenshot_base64 = base64.b64encode(screenshot).decode('utf-8')
             
             browser.close()
             
-            # Log activity
             log_entry = {
                 'form_id': 'scrape',
                 'timestamp': datetime.now().isoformat(),
@@ -197,7 +194,6 @@ def scrape_form():
     except PlaywrightTimeout:
         return jsonify({'status': 'error', 'message': 'Page load timeout. Please check the URL.'}), 400
     except Exception as e:
-        # Log error
         log_entry = {
             'form_id': 'scrape',
             'timestamp': datetime.now().isoformat(),
@@ -216,28 +212,22 @@ def fill_form():
     form_id = data.get('form_id')
     form_values = data.get('values', {})
     
-    # Get form from database
     form = forms_collection.find_one({'form_id': form_id}, {'_id': 0})
     if not form:
         return jsonify({'status': 'error', 'message': 'Form not found'}), 404
     
     try:
         with sync_playwright() as p:
-            # Launch browser (visible mode)
             browser = p.chromium.launch(headless=False)
-            context = browser.new_context(
-                viewport={'width': 1920, 'height': 1080}
-            )
+            context = browser.new_context(viewport={'width': 1920, 'height': 1080})
             page = context.new_page()
             
-            # Navigate to form URL
             page.goto(form['url'], wait_until='networkidle', timeout=30000)
             page.wait_for_timeout(2000)
             
             filled_fields = []
             errors = []
             
-            # Fill form fields
             for field in form['fields']:
                 selector = field.get('selector', '')
                 field_name = field.get('name', '')
@@ -248,7 +238,6 @@ def fill_form():
                     continue
                 
                 try:
-                    # Wait for element
                     page.wait_for_selector(selector, timeout=5000, state='visible')
                     
                     if field_type in ['select', 'select-one']:
@@ -259,19 +248,16 @@ def fill_form():
                     elif field_type == 'radio':
                         page.check(selector)
                     elif field_type == 'file':
-                        # Skip file uploads for now
                         continue
                     else:
                         page.fill(selector, str(value))
                     
                     filled_fields.append(field_name)
-                    page.wait_for_timeout(500)  # Small delay between fields
+                    page.wait_for_timeout(500)
                     
                 except Exception as e:
                     errors.append(f"{field_name}: {str(e)}")
-                    print(f"Error filling {selector}: {e}")
             
-            # Try to find and click submit button
             submit_clicked = False
             submit_selectors = [
                 'button[type="submit"]',
@@ -291,16 +277,11 @@ def fill_form():
                 except:
                     continue
             
-            # Wait for submission
             page.wait_for_timeout(3000)
-            
-            # Take screenshot
             screenshot = page.screenshot(full_page=False)
             screenshot_base64 = base64.b64encode(screenshot).decode('utf-8')
-            
             browser.close()
             
-            # Log activity
             log_entry = {
                 'form_id': form_id,
                 'timestamp': datetime.now().isoformat(),
@@ -323,7 +304,6 @@ def fill_form():
             })
     
     except Exception as e:
-        # Log error
         log_entry = {
             'form_id': form_id,
             'timestamp': datetime.now().isoformat(),
@@ -362,14 +342,12 @@ def test_connection():
         'timestamp': datetime.now().isoformat()
     }
     
-    # Test MongoDB
     try:
         client.server_info()
         results['mongodb'] = True
     except Exception as e:
         results['mongodb_error'] = str(e)
     
-    # Test Playwright
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -381,16 +359,22 @@ def test_connection():
     return jsonify(results)
 
 if __name__ == '__main__':
-    # Create indexes
-    forms_collection.create_index('form_id', unique=True)
-    logs_collection.create_index('timestamp')
+    # Create indexes only if MongoDB is available
+    if MONGO_AVAILABLE:
+        try:
+            forms_collection.create_index('form_id', unique=True)
+            logs_collection.create_index('timestamp')
+        except Exception as e:
+            print(f"⚠️  Could not create indexes: {e}")
     
     print("=" * 60)
     print("🤖 Form Automation System")
     print("=" * 60)
-    print(f"MongoDB: {MONGO_URI}")
+    print(f"MongoDB: {'Connected' if MONGO_AVAILABLE else 'Not Available'}")
     print(f"Server: http://localhost:5000")
     print("=" * 60)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False, threaded=True)
+
+
 
